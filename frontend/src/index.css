@@ -1,0 +1,149 @@
+/* Global styles - refine with a design system (Tailwind or CSS variables) later */
+:root {
+  --color-bg: #0f1115;
+  --color-panel: #161a22;
+  --color-border: #262b36;
+  --color-text: #e6e9ef;
+  --color-muted: #8b93a3;
+  --color-accent: #4f8cff;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.app-main {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.app-main > * {
+  border-right: 1px solid var(--color-border);
+}
+
+/* ---- Toolbar / status bar ---- */
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-panel);
+}
+
+.toolbar__logo {
+  font-weight: 700;
+  color: var(--color-accent);
+}
+
+.toolbar input {
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+  border-radius: 6px;
+  padding: 4px 8px;
+}
+
+.toolbar button {
+  background: var(--color-accent);
+  border: none;
+  color: #fff;
+  border-radius: 6px;
+  padding: 5px 12px;
+  cursor: pointer;
+}
+
+.statusbar {
+  display: flex;
+  gap: 20px;
+  padding: 6px 14px;
+  border-top: 1px solid var(--color-border);
+  background: var(--color-panel);
+  font-size: 12px;
+  color: var(--color-muted);
+}
+
+/* ---- Panels ---- */
+.panel {
+  background: var(--color-panel);
+  padding: 10px;
+  overflow: auto;
+}
+
+.panel h3 {
+  margin: 0 0 10px;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-muted);
+}
+
+.palette-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  margin-bottom: 8px;
+  padding: 8px 10px;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  color: var(--color-text);
+  cursor: grab;
+}
+
+/* ---- Custom canvas nodes ---- */
+.nexus-node {
+  min-width: 150px;
+  border-radius: 10px;
+  border: 1px solid var(--color-border);
+  background: var(--color-panel);
+  font-size: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+}
+
+.nexus-node.selected {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 2px rgba(79, 140, 255, 0.35);
+}
+
+.nexus-node__header {
+  padding: 6px 10px;
+  font-weight: 600;
+  border-bottom: 1px solid var(--color-border);
+  border-radius: 10px 10px 0 0;
+}
+
+.nexus-node__body {
+  padding: 6px 10px;
+  color: var(--color-muted);
+}
+
+.nexus-node--source .nexus-node__header {
+  background: rgba(79, 140, 255, 0.15);
+}
+.nexus-node--math .nexus-node__header {
+  background: rgba(255, 179, 71, 0.15);
+}
+.nexus-node--action .nexus-node__header {
+  background: rgba(255, 99, 132, 0.15);
+}

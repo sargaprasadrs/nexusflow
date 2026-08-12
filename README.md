@@ -20,6 +20,42 @@ This README captures the project direction, team workflow, and the August 5-31, 
 - Integrations: telemetry ingestion, webhook execution, alert delivery
 - Quality: validation, testing, performance tuning, security review
 
+## Repository Layout
+
+```
+nexusflow/
+├── backend/                # Express API, RxJS compiler, WebSocket broker (Chandra)
+│   └── src/
+│       ├── config/         # env + MongoDB connection
+│       ├── models/         # Telemetry (Time-Series), Graph, Alert, Webhook, RuleHistory, AuditLog
+│       ├── routes/         # /api/ingest, /telemetry, /graphs, /alerts, /webhooks, /history, /templates
+│       ├── controllers/    # request handlers
+│       ├── services/       # business logic (telemetry, graph, compiler, execution, webhooks, ...)
+│       ├── compiler/       # graph parser -> RxJS pipeline builder (nodeRegistry, operators)
+│       ├── websocket/      # channel broker (/ws/telemetry, /ws/alerts)
+│       ├── seed/           # seed telemetry (npm run seed)
+│       ├── scripts/        # mock telemetry generator (npm run mock)
+│       └── utils/          # logger, csv export
+├── frontend/               # React + Vite + React Flow app (Praveen)
+│   └── src/
+│       ├── components/
+│       │   ├── canvas/     # GraphCanvas (React Flow wrapper)
+│       │   ├── nodes/      # DataSource, MathOp, Filter, Conditional, Aggregation, Action
+│       │   ├── panels/     # NodePropertyPanel, AlertPanel
+│       │   ├── charts/     # LiveChart (Recharts)
+│       │   └── ui/         # Toolbar, Sidebar, StatusBar, Toasts
+│       ├── store/          # Zustand graph store
+│       ├── hooks/          # useWebSocket
+│       ├── lib/            # graphSerializer, ws client
+│       └── types/          # graph + telemetry types
+├── docs/                   # setup + development guidelines
+├── PROJECT_BOARD.md        # task tracking
+└── README.md
+```
+
+Each file starts as a minimal placeholder with a TODO pointing to its owner and
+week - everyone fills in their files on their own branch.
+
 ## Team Roles
 
 - Sarga: coordination, GitHub management, DevOps, documentation, UI polish
