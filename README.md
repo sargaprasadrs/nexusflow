@@ -2,7 +2,13 @@
 
 NexusFlow is a visual rule engine for building, compiling, and running telemetry-driven workflows. The system combines a React Flow canvas, a Node.js and Express backend, MongoDB Time-Series storage, RxJS-based stream processing, and WebSocket-powered live updates.
 
-This README captures the project direction, team workflow, and the August 5-31, 2026 delivery plan.
+This README captures the project direction, team workflow, and the August 11 – September 7, 2026 delivery plan.
+
+## Documentation
+
+- [Setup Guide](docs/SETUP.md) — prerequisites, clone, branches, MongoDB, running backend/frontend
+- [Development Guidelines](docs/DEVELOPMENT.md) — architecture, git workflow, commit standards, definition of done
+- [Project Board](PROJECT_BOARD.md) — who is doing what, day by day
 
 ## Project Goals
 
@@ -65,16 +71,17 @@ week - everyone fills in their files on their own branch.
 
 ## Branch Strategy
 
-- main: integration branch
-- backend-chandra: backend work owned by Chandra
-- frontend-praveen: frontend work owned by Praveen
-- backend-sowmya: backend and integration work owned by Sowmya
+- main: integration branch; merge target at weekly reviews
+- sarga: coordination, docs, DevOps, UI polish — owned by Sarga
+- chandra: backend (Express, RxJS, rule execution) — owned by Chandra
+- praveen: frontend (React, React Flow, dashboards) — owned by Praveen
+- sowmya: database (MongoDB Time-Series), persistence, webhooks — owned by Sowmya
 
-Daily work is developed on feature branches, then merged into main on weekly reviews.
+Daily work is developed on the owner branches (and short-lived feature branches off them), then merged into main on weekly reviews. See [Development Guidelines](docs/DEVELOPMENT.md#2-git-workflow) for the full workflow.
 
 ## Delivery Roadmap
 
-### Week 1: August 5-11, 2026
+### Week 1: August 11-17, 2026
 
 Focus: project kickoff, database foundation, API scaffolding, and canvas setup.
 
@@ -84,7 +91,7 @@ Focus: project kickoff, database foundation, API scaffolding, and canvas setup.
 - Canvas scaffolding, node creation, edge logic, and save/load flow
 - Weekly review, documentation updates, and main branch merge
 
-### Week 2: August 12-18, 2026
+### Week 2: August 18-24, 2026
 
 Focus: compiler foundation, operator library, and live execution support.
 
@@ -93,7 +100,7 @@ Focus: compiler foundation, operator library, and live execution support.
 - Live compilation, execution status UI, and error handling
 - Performance audit, demo preparation, and mid-review merge
 
-### Week 3: August 19-25, 2026
+### Week 3: August 25-31, 2026
 
 Focus: live dashboards, webhooks, alert management, and resilience.
 
@@ -103,7 +110,7 @@ Focus: live dashboards, webhooks, alert management, and resilience.
 - Concurrent execution, alert deduplication, execution logging
 - Performance optimization, edge case testing, and merge to main
 
-### Week 4: August 26-31, 2026
+### Week 4: September 1-7, 2026
 
 Focus: refinement, history, templates, audits, documentation, and final review.
 
@@ -112,6 +119,12 @@ Focus: refinement, history, templates, audits, documentation, and final review.
 - CSV export, dark mode, and responsive/security testing
 - Setup guide, component API docs, backend docs, and deployment notes
 - Final bug fixes, benchmarks, full merge, and verification
+
+## Quick Start
+
+1. Clone: `git clone https://github.com/sargaprasadrs/nexusflow.git && cd nexusflow`
+2. Check out your branch (see [Branch Strategy](#branch-strategy))
+3. Start MongoDB, then run the backend and frontend per the [Setup Guide](docs/SETUP.md)
 
 ## Daily Standup Format
 

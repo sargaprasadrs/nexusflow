@@ -41,3 +41,23 @@ export interface SerializedGraph {
   nodes: GraphNode[];
   edges: GraphEdge[];
 }
+
+// The exact JSON the backend Graph model stores (backend/src/models/Graph.js).
+// React Flow nodes carry extra props (measured, selected...) - the API only
+// needs id/type/position/data and edge endpoints.
+export interface ApiGraph {
+  name: string;
+  nodes: Array<{
+    id: string;
+    type: string;
+    position: { x: number; y: number };
+    data: Record<string, unknown>;
+  }>;
+  edges: Array<{
+    id: string;
+    source: string;
+    target: string;
+    sourceHandle?: string | null;
+    targetHandle?: string | null;
+  }>;
+}

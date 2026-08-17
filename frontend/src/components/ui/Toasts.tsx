@@ -1,22 +1,21 @@
-import { useState } from 'react';
+import { useToastStore } from '../../store/toastStore';
 
-export interface Toast {
-  id: number;
-  kind: 'info' | 'success' | 'error';
-  message: string;
-}
-
-// Simple toast stack (Week 1 polish). TODO: lift into a store so any component
-// can push toasts (save confirmation, compile errors, alert notifications).
+// Toast stack - renders messages pushed via the toast store (save confirmations,
+// compile errors, alert notifications). Click a toast to dismiss it.
 export default function Toasts() {
-  const [toasts] = useState<Toast[]>([]);
+  const toasts = useToastStore((s) => s.toasts);
+  const dismiss = useToastStore((s) => s.dismiss);
 
   return (
     <div className="toasts">
       {toasts.map((t) => (
-        <div key={t.id} className={`toast toast--${t.kind}`}>
+        <button
+          key={t.id}
+          className={`toast toast--${t.kind}`}
+          onClick={() => dismiss(t.id)}
+        >
           {t.message}
-        </div>
+        </button>
       ))}
     </div>
   );

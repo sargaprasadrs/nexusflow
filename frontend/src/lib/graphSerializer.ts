@@ -2,7 +2,7 @@
 // Produces the exact JSON shape the backend compiler consumes
 // (see backend/src/models/Graph.js).
 import type { Edge, Node } from '@xyflow/react';
-import type { SerializedGraph } from '../types/graph';
+import type { ApiGraph, GraphNode, SerializedGraph } from '../types/graph';
 
 export function serializeGraph(
   name: string,
@@ -11,7 +11,9 @@ export function serializeGraph(
 ): SerializedGraph {
   return {
     name,
-    nodes,
+    // React Flow nodes may carry extra props; the backend Graph model only
+    // needs { id, type, position, data } - see toApiGraph below.
+    nodes: nodes as GraphNode[],
     edges,
   };
 }
@@ -32,10 +34,15 @@ export function deserializeGraph(input: string | SerializedGraph): {
 }
 
 // Serialize to the backend API shape (used by save/load).
-export function toApiGraph(name: string, nodes: Node[], edges: Edge[]) {
+export function toApiGraph(name: string, nodes: Node[], edges: Edge[]): ApiGraph {
   return {
     name,
-    nodes: nodes.map(({ id, type, position, data }) => ({ id, type, position, data })),
+    nodes: nodes.map(({ id, type, position, data }) => ({
+      id,
+      type: type ?? 'dataSource',
+      position: { x: position.x, y: position.y },
+      data: (data ?? {}) as Record<string, unknown>,
+    })),
     edges: edges.map(({ id, source, target, sourceHandle, targetHandle }) => ({
       id,
       source,
