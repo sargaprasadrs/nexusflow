@@ -7,14 +7,44 @@ import { getOperator } from './nodeRegistry.js';
 export function buildPipeline(graph) {
   const { nodes, edges } = parseGraph(graph);
 
-  // TODO (Week 2): topological sort from edges (source -> target), then map each
-  // node to its operator via nodeRegistry and assemble the observable chain.
-  const sorted = nodes; // placeholder: replace with real topological order
+  const sorted = topologicalSort(nodes, edges);
 
   return sorted.map((node) => ({
     nodeId: node.id,
     type: node.type,
-    operator: getOperator(node.type), // throws until operators are registered
+    operator: getOperator(node.type), // throws if the node type has no operator
     config: node.data ?? {},
   }));
+}
+
+// Kahn's algorithm: order nodes so every edge points source -> target.
+// Throws 400 on cycles so a broken graph never reaches the execution layer.
+export function topologicalSort(nodes, edges) {
+  const inDegree = new Map(nodes.map((n) => [n.id, 0]));
+  const adjacency = new Map(nodes.map((n) => [n.id, []]));
+
+  for (const edge of edges) {
+    adjacency.get(edge.source).push(edge.target);
+    inDegree.set(edge.target, (inDegree.get(edge.target) ?? 0) + 1);
+  }
+
+  const queue = nodes.filter((n) => inDegree.get(n.id) === 0).map((n) => n.id);
+  const order = [];
+
+  while (queue.length > 0) {
+    const id = queue.shift();
+    order.push(id);
+    for (const target of adjacency.get(id)) {
+      const next = inDegree.get(target) - 1;
+      inDegree.set(target, next);
+      if (next === 0) queue.push(target);
+    }
+  }
+
+  if (order.length !== nodes.length) {
+    throw Object.assign(new Error('Graph contains a cycle and cannot be compiled'), { status: 400 });
+  }
+
+  const byId = new Map(nodes.map((n) => [n.id, n]));
+  return order.map((id) => byId.get(id));
 }

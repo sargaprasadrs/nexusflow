@@ -9,7 +9,10 @@ export const compilerService = {
     return {
       graphId: graph._id,
       name: graph.name,
-      stages,
+      stageCount: stages.length,
+      // Strip operator functions so the response is JSON-serializable; the
+      // execution layer re-resolves operators via getOperator(stage.type).
+      stages: stages.map(({ nodeId, type, config }) => ({ nodeId, type, config })),
       compiledAt: new Date(),
     };
   },

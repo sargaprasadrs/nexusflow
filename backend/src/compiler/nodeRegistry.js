@@ -1,5 +1,7 @@
 // Node registry (Week 2) - maps frontend node types to RxJS operators.
 // Kept in sync with the frontend node library (frontend/src/components/nodes).
+import { operators } from './operators.js';
+
 export const NODE_TYPES = {
   dataSource: 'dataSource',   // DataSourceNode
   mathOp: 'mathOp',           // MathOpNode
@@ -9,7 +11,6 @@ export const NODE_TYPES = {
   action: 'action',           // ActionNode (alert + webhook)
 };
 
-// TODO (Week 2): register the operator implementation for each node type.
 export const nodeRegistry = new Map();
 
 export function registerNode(type, operatorFactory) {
@@ -23,3 +24,17 @@ export function getOperator(type) {
   }
   return factory;
 }
+
+// Pass-through operator for nodes that are stream sources or terminal actions.
+// Rule execution (WebSocket emit / alert / webhook firing) lands in Week 3.
+const identity = () => (source) => source;
+
+registerNode(NODE_TYPES.dataSource, identity);                    // stream source
+registerNode(NODE_TYPES.mathOp, operators.math);
+registerNode(NODE_TYPES.filter, operators.filterCondition);
+// Conditional nodes split into true/false outputs in Week 3 (execution layer);
+// until then they behave like a filter so pipelines compile and run.
+registerNode(NODE_TYPES.conditional, operators.filterCondition);
+registerNode(NODE_TYPES.aggregation, operators.aggregation);
+registerNode(NODE_TYPES.action, identity);                        // terminal action
+

@@ -10,6 +10,21 @@ export const alertController = {
     }
   },
 
+  // POST /api/alerts - create an alert (manual entry; the rule engine also
+  // creates alerts via alertService when a rule fires - Week 3).
+  async create(req, res, next) {
+    try {
+      const { ruleId, deviceId, value, status, meta } = req.body ?? {};
+      if (!ruleId || !deviceId) {
+        return res.status(400).json({ error: '"ruleId" and "deviceId" are required' });
+      }
+      const alert = await alertService.create({ ruleId, deviceId, value, status, meta });
+      res.status(201).json(alert);
+    } catch (err) {
+      next(err);
+    }
+  },
+
   async updateStatus(req, res, next) {
     try {
       const alert = await alertService.updateStatus(req.params.id, req.body.status);

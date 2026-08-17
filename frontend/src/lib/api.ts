@@ -29,7 +29,27 @@ export interface SavedGraph extends ApiGraph {
   updatedAt: string;
 }
 
+export interface CompileResult {
+  ok: boolean;
+  graphId: string;
+  name: string;
+  stageCount: number;
+  stages: Array<{ nodeId: string; type: string; config: Record<string, unknown> }>;
+  compiledAt: string;
+}
+
+export interface HealthResult {
+  status: 'ok' | 'degraded';
+  db: { ready: boolean; state: string };
+  uptime: number;
+}
+
 export const api = {
+  health: () => request<HealthResult>('/health'),
+
+  compileGraph: (id: string) =>
+    request<CompileResult>(`/graphs/${id}/compile`, { method: 'POST' }),
+
   listGraphs: () => request<SavedGraph[]>('/graphs'),
 
   getGraph: (id: string) => request<SavedGraph>(`/graphs/${id}`),

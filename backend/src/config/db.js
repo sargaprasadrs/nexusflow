@@ -12,4 +12,13 @@ export async function connectDB(uri = MONGODB_URI) {
   return mongoose.connection;
 }
 
+// Snapshot of the current connection state, used by GET /api/health so the
+// server can report 'degraded' while MongoDB is unreachable (server boots
+// regardless - see server.js).
+export function dbStatus() {
+  const state = mongoose.connection.readyState; // 0..3
+  const names = ['disconnected', 'connected', 'connecting', 'disconnecting'];
+  return { ready: state === 1, state: names[state] ?? 'unknown' };
+}
+
 export default mongoose;

@@ -1,4 +1,4 @@
-import { filter, map } from 'rxjs';
+import { bufferTime, filter, map, pipe } from 'rxjs';
 
 // Operator library (Week 2, Chandra).
 // Each operator consumes a telemetry point and returns a transformed point.
@@ -35,6 +35,30 @@ export const operators = {
     });
   },
 
-  // TODO (Week 2): aggregation operators (moving average, sum, count, min, max)
-  // using RxJS window/scan. The Turbine Sensor -> Moving Average example needs this.
+  // Aggregation over a sliding window: { field, windowMs, aggregate: 'avg'|'sum'|'count'|'min'|'max' }.
+  // Emits one aggregated point per window, tagged with the last point's timestamp.
+  // Used by AggregationNode (Turbine Sensor -> Moving Average example).
+  aggregation({ field, windowMs = 5000, aggregate = 'avg' }) {
+    return pipe(
+      bufferTime(windowMs),
+      filter((points) => points.length > 0),
+      map((points) => {
+        const values = points
+          .map((p) => p.fields?.[field])
+          .filter((v) => typeof v === 'number');
+        if (values.length === 0) return points[points.length - 1];
+        const sum = values.reduce((a, b) => a + b, 0);
+        let value;
+        switch (aggregate) {
+          case 'sum': value = sum; break;
+          case 'count': value = values.length; break;
+          case 'min': value = Math.min(...values); break;
+          case 'max': value = Math.max(...values); break;
+          default: value = sum / values.length; // 'avg'
+        }
+        const last = points[points.length - 1];
+        return { ...last, fields: { ...last.fields, [field]: value } };
+      })
+    );
+  },
 };

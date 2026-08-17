@@ -54,7 +54,7 @@ export const graphController = {
       const graph = await graphService.getById(req.params.id);
       if (!graph) return res.status(404).json({ error: 'Graph not found' });
       const pipeline = compilerService.compile(graph);
-      res.json({ ok: true, stages: pipeline.stages.length });
+      res.json({ ok: true, ...pipeline });
     } catch (err) {
       next(err);
     }

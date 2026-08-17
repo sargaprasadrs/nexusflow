@@ -12,7 +12,9 @@ export const telemetryService = {
         deviceId: p.deviceId ?? p.meta?.deviceId ?? 'unknown',
         deviceType: p.deviceType ?? p.meta?.deviceType ?? 'unknown',
       },
-      fields: p.fields ?? p,
+      // Store only the sensor readings; an empty object beats copying ts/meta
+      // into `fields` when the payload omits them.
+      fields: p.fields && typeof p.fields === 'object' ? p.fields : {},
     }));
     const result = await Telemetry.insertMany(docs, { ordered: false });
     return result.length;

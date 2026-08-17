@@ -19,7 +19,9 @@ const telemetrySchema = new Schema(
     },
     fields: { type: Schema.Types.Mixed, required: true }, // e.g. { temperature, pressure, vibration, rpm }
   },
-  { strict: false, versionKey: false }
+  // minimize:false keeps empty `fields` objects ({} is the fallback when a
+  // payload omits readings); mongoose's default minimize would strip them.
+  { strict: false, versionKey: false, minimize: false }
 );
 
 telemetrySchema.index({ 'meta.deviceId': 1, ts: -1 });

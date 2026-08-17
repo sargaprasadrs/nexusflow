@@ -63,6 +63,21 @@ export default function Toolbar() {
     }
   };
 
+  const handleCompile = async () => {
+    if (!currentGraphId) {
+      toast.info('Save the graph first, then compile');
+      return;
+    }
+    try {
+      const result = await api.compileGraph(currentGraphId);
+      toast.success(
+        `Compiled "${graphName}" into ${result.stageCount} stage${result.stageCount === 1 ? '' : 's'}`
+      );
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Compile failed');
+    }
+  };
+
   const handleLoad = async () => {
     if (!selectedGraphId) {
       toast.info('Pick a saved graph from the dropdown, or save this one first');
@@ -108,7 +123,7 @@ export default function Toolbar() {
         ))}
       </select>
       <button onClick={handleLoad}>Load</button>
-      <button title="Compile graph to RxJS pipeline (Week 2)" disabled>
+      <button onClick={handleCompile} title="Compile graph to RxJS pipeline">
         Compile
       </button>
     </header>
