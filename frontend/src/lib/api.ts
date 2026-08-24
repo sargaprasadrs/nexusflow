@@ -44,6 +44,28 @@ export interface HealthResult {
   uptime: number;
 }
 
+export interface RunningRule {
+  graphId: string;
+  name: string;
+  stageCount: number;
+  startedAt: string;
+}
+
+export interface ExecuteResult {
+  ok: boolean;
+  graphId: string;
+  name: string;
+  stageCount: number;
+  startedAt: string;
+}
+
+export interface StopResult {
+  ok: boolean;
+  graphId: string;
+  stoppedAt: string;
+  durationMs: number;
+}
+
 export const api = {
   health: () => request<HealthResult>('/health'),
 
@@ -59,4 +81,12 @@ export const api = {
 
   updateGraph: (id: string, graph: ApiGraph) =>
     request<SavedGraph>(`/graphs/${id}`, { method: 'PUT', body: JSON.stringify(graph) }),
+
+  executeGraph: (id: string) =>
+    request<ExecuteResult>(`/graphs/${id}/execute`, { method: 'POST' }),
+
+  stopGraph: (id: string) =>
+    request<StopResult>(`/graphs/${id}/stop`, { method: 'POST' }),
+
+  runningRules: () => request<RunningRule[]>('/graphs/running'),
 };

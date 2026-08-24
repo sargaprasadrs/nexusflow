@@ -199,6 +199,31 @@ body {
 .nexus-node--math .nexus-node__header {
   background: rgba(255, 179, 71, 0.15);
 }
+.nexus-node--filter .nexus-node__header,
+.nexus-node--conditional .nexus-node__header {
+  background: rgba(46, 204, 113, 0.15);
+}
+.nexus-node--aggregation .nexus-node__header {
+  background: rgba(155, 89, 182, 0.15);
+}
 .nexus-node--action .nexus-node__header {
   background: rgba(255, 99, 132, 0.15);
+}
+
+/* ---- Property panel form ---- */
+.prop-label {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 12px;
+  color: var(--color-muted);
+}
+
+.prop-input {
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+  border-radius: 6px;
+  padding: 5px 8px;
+  font-size: 12px;
 }

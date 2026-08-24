@@ -5,8 +5,7 @@ import { toast } from '../../store/toastStore';
 import { api, type SavedGraph } from '../../lib/api';
 import { toApiGraph } from '../../lib/graphSerializer';
 
-// Top toolbar (Week 1-2) - graph name, new / save / load actions wired to
-// /api/graphs. Compile lands in Week 2 once the RxJS compiler is in.
+// Top toolbar — graph name, new / save / load / compile / execute actions.
 export default function Toolbar() {
   const graphName = useGraphStore((s) => s.graphName);
   const setGraphName = useGraphStore((s) => s.setGraphName);
@@ -20,6 +19,7 @@ export default function Toolbar() {
   const [savedGraphs, setSavedGraphs] = useState<SavedGraph[]>([]);
   const [selectedGraphId, setSelectedGraphId] = useState('');
   const [saving, setSaving] = useState(false);
+  const [executing, setExecuting] = useState(false);
 
   // Load the dropdown once on mount.
   useEffect(() => {
@@ -97,6 +97,32 @@ export default function Toolbar() {
     }
   };
 
+  const handleExecute = async () => {
+    if (!currentGraphId) {
+      toast.info('Save the graph first, then execute');
+      return;
+    }
+    setExecuting(true);
+    try {
+      const result = await api.executeGraph(currentGraphId);
+      toast.success(`Executing "${result.name}" (${result.stageCount} stages)`);
+    } catch (err) {
+      setExecuting(false);
+      toast.error(err instanceof Error ? err.message : 'Execute failed');
+    }
+  };
+
+  const handleStop = async () => {
+    if (!currentGraphId) return;
+    try {
+      await api.stopGraph(currentGraphId);
+      setExecuting(false);
+      toast.info('Execution stopped');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Stop failed');
+    }
+  };
+
   return (
     <header className="toolbar">
       <span className="toolbar__logo">NexusFlow</span>
@@ -125,6 +151,21 @@ export default function Toolbar() {
       <button onClick={handleLoad}>Load</button>
       <button onClick={handleCompile} title="Compile graph to RxJS pipeline">
         Compile
+      </button>
+      <button
+        onClick={handleExecute}
+        disabled={!currentGraphId || executing}
+        title="Start live execution against telemetry stream"
+      >
+        {executing ? 'Running…' : 'Execute'}
+      </button>
+      <button
+        onClick={handleStop}
+        disabled={!currentGraphId || !executing}
+        title="Stop live execution"
+        style={{ background: '#ff5a6e' }}
+      >
+        Stop
       </button>
     </header>
   );
