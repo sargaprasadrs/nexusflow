@@ -26,8 +26,9 @@ app.use(express.json({ limit: '5mb' }));
 app.use(noSqlInjectionGuard);
 app.use(bodySizeGuard(5 * 1024 * 1024));
 
-// Stricter rate limit for the ingest endpoint (high-throughput but still bounded).
-app.use('/api/ingest', rateLimit({ windowMs: 60_000, max: 60 }));
+// High-throughput rate limit for the ingest endpoint (allows telemetry streams).
+app.use('/api/ingest', rateLimit({ windowMs: 60_000, max: 1200 }));
+
 
 // API routes
 app.use('/api', routes);

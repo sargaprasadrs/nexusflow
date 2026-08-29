@@ -2,16 +2,13 @@
 // Lightweight rate limiter, security headers, input sanitization, and
 // NoSQL injection prevention — no external dependencies needed.
 
-// ---------------------------------------------------------------------------
-// 1. Rate limiter — simple in-memory sliding window per IP.
-// ---------------------------------------------------------------------------
-const rateLimitBuckets = new Map(); // ip -> { count, resetAt }
-
 /**
  * Express middleware factory. Limits `max` requests per `windowMs` for each
  * client IP. Returns 429 when exceeded.
  */
 export function rateLimit({ windowMs = 60_000, max = 100 } = {}) {
+  const rateLimitBuckets = new Map(); // ip -> { count, resetAt } per limiter instance
+
   return (req, res, next) => {
     const ip = req.ip ?? req.socket.remoteAddress ?? 'unknown';
     const now = Date.now();
@@ -36,6 +33,7 @@ export function rateLimit({ windowMs = 60_000, max = 100 } = {}) {
     next();
   };
 }
+
 
 // ---------------------------------------------------------------------------
 // 2. Security headers — sets common protective headers.

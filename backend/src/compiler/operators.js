@@ -20,20 +20,41 @@ export const operators = {
     });
   },
 
-  // Filters: { field, operator: 'gt' | 'lt' | 'gte' | 'lte' | 'eq', value }
-  filterCondition({ field, operator = 'gt', value }) {
+  // Filters: { field, operator: 'gt' | 'lt' | 'gte' | 'lte' | 'eq', value, threshold }
+  filterCondition({ field, operator = 'gt', value, threshold }) {
+    const targetVal = Number(value ?? threshold ?? 0);
     return filter((point) => {
-      const current = point.fields?.[field];
+      let f = field?.trim();
+      let current = f ? point.fields?.[f] : undefined;
+
+      // Fallback if field is unconfigured or aliased
+      if (current === undefined && point.fields) {
+        if (!f) {
+          const firstKey = Object.keys(point.fields).find(
+            (k) => typeof point.fields[k] === 'number'
+          );
+          if (firstKey) current = point.fields[firstKey];
+        } else if (f === 'temp') {
+          current = point.fields.temperature;
+        } else if (f === 'temperature') {
+          current = point.fields.temp;
+        }
+      }
+
+      if (current === undefined || current === null) return false;
+      const numCurrent = Number(current);
       switch (operator) {
-        case 'gt': return current > value;
-        case 'gte': return current >= value;
-        case 'lt': return current < value;
-        case 'lte': return current <= value;
-        case 'eq': return current === value;
+        case 'gt': return numCurrent > targetVal;
+        case 'gte': return numCurrent >= targetVal;
+        case 'lt': return numCurrent < targetVal;
+        case 'lte': return numCurrent <= targetVal;
+        case 'eq': return numCurrent === targetVal;
         default: return false;
       }
     });
   },
+
+
 
   // Aggregation over a sliding window: { field, windowMs, aggregate: 'avg'|'sum'|'count'|'min'|'max' }.
   // Emits one aggregated point per window, tagged with the last point's timestamp.

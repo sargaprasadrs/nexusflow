@@ -37,25 +37,27 @@ export default function Toolbar() {
     toast.info('Started a new graph');
   };
 
-  const handleSave = async () => {
-    if (!graphName.trim()) {
-      toast.error('Give the graph a name before saving');
-      return;
+  const ensureSaved = async (): Promise<string | null> => {
+    if (currentGraphId) {
+      const payload = toApiGraph(graphName.trim() || 'Untitled graph', nodes, edges);
+      const saved = await api.updateGraph(currentGraphId, payload);
+      return saved._id;
     }
+    const nameToSave = graphName.trim() || `Graph ${new Date().toLocaleTimeString()}`;
+    setGraphName(nameToSave);
+    const payload = toApiGraph(nameToSave, nodes, edges);
+    const saved = await api.createGraph(payload);
+    setCurrentGraphId(saved._id);
+    setSelectedGraphId(saved._id);
+    setSavedGraphs((prev) => [...prev, saved]);
+    toast.success(`Saved "${saved.name}"`);
+    return saved._id;
+  };
+
+  const handleSave = async () => {
     setSaving(true);
     try {
-      const payload = toApiGraph(graphName.trim(), nodes, edges);
-      if (currentGraphId) {
-        const saved = await api.updateGraph(currentGraphId, payload);
-        setCurrentGraphId(saved._id);
-        toast.success(`Saved "${saved.name}"`);
-      } else {
-        const saved = await api.createGraph(payload);
-        setCurrentGraphId(saved._id);
-        setSelectedGraphId(saved._id);
-        setSavedGraphs((prev) => [...prev, saved]);
-        toast.success(`Created "${saved.name}"`);
-      }
+      await ensureSaved();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Save failed');
     } finally {
@@ -64,12 +66,10 @@ export default function Toolbar() {
   };
 
   const handleCompile = async () => {
-    if (!currentGraphId) {
-      toast.info('Save the graph first, then compile');
-      return;
-    }
     try {
-      const result = await api.compileGraph(currentGraphId);
+      const targetId = currentGraphId ?? (await ensureSaved());
+      if (!targetId) return;
+      const result = await api.compileGraph(targetId);
       toast.success(
         `Compiled "${graphName}" into ${result.stageCount} stage${result.stageCount === 1 ? '' : 's'}`
       );
@@ -80,7 +80,7 @@ export default function Toolbar() {
 
   const handleLoad = async () => {
     if (!selectedGraphId) {
-      toast.info('Pick a saved graph from the dropdown, or save this one first');
+      toast.info('Pick a saved graph from the dropdown first');
       return;
     }
     try {
@@ -98,13 +98,18 @@ export default function Toolbar() {
   };
 
   const handleExecute = async () => {
-    if (!currentGraphId) {
-      toast.info('Save the graph first, then execute');
+    if (nodes.length === 0) {
+      toast.info('Add at least one node to the canvas before executing');
       return;
     }
     setExecuting(true);
     try {
-      const result = await api.executeGraph(currentGraphId);
+      const targetId = currentGraphId ?? (await ensureSaved());
+      if (!targetId) {
+        setExecuting(false);
+        return;
+      }
+      const result = await api.executeGraph(targetId);
       toast.success(`Executing "${result.name}" (${result.stageCount} stages)`);
     } catch (err) {
       setExecuting(false);
@@ -113,10 +118,13 @@ export default function Toolbar() {
   };
 
   const handleStop = async () => {
-    if (!currentGraphId) return;
+    setExecuting(false);
+    if (!currentGraphId) {
+      toast.info('No running graph to stop');
+      return;
+    }
     try {
       await api.stopGraph(currentGraphId);
-      setExecuting(false);
       toast.info('Execution stopped');
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Stop failed');
@@ -154,14 +162,13 @@ export default function Toolbar() {
       </button>
       <button
         onClick={handleExecute}
-        disabled={!currentGraphId || executing}
+        disabled={nodes.length === 0}
         title="Start live execution against telemetry stream"
       >
-        {executing ? 'Running…' : 'Execute'}
+        {executing ? 'Restarting…' : 'Execute'}
       </button>
       <button
         onClick={handleStop}
-        disabled={!currentGraphId || !executing}
         title="Stop live execution"
         style={{ background: '#ff5a6e' }}
       >
@@ -169,4 +176,5 @@ export default function Toolbar() {
       </button>
     </header>
   );
+
 }

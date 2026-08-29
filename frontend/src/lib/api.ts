@@ -89,4 +89,6 @@ export const api = {
     request<StopResult>(`/graphs/${id}/stop`, { method: 'POST' }),
 
   runningRules: () => request<RunningRule[]>('/graphs/running'),
+  listAlerts: () => request<Array<Record<string, unknown>>>('/alerts'),
 };
+

@@ -50,9 +50,10 @@ export default function GraphCanvas() {
   );
 
   const onConnect = useCallback(
-    (connection: Connection) => setEdges(addEdge(connection, edges)),
+    (connection: Connection) => setEdges(addEdge({ ...connection, animated: true }, edges)),
     [edges, setEdges]
   );
+
 
   return (
     <div className="graph-canvas" style={{ flex: 1, position: 'relative' }}>

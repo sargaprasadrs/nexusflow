@@ -1,4 +1,5 @@
-import { Subject } from 'rxjs';
+import { Subject, filter } from 'rxjs';
+
 import { buildPipeline } from '../compiler/pipelineBuilder.js';
 import { graphService } from './graphService.js';
 import { alertService } from './alertService.js';
@@ -16,9 +17,11 @@ export const telemetryBus = new Subject();
 export const executionService = {
   /** Start executing a compiled graph against the live telemetry stream. */
   async start(graphId) {
+    // If the rule is already running, cleanly restart it with updated pipeline logic.
     if (activeRules.has(graphId)) {
-      throw Object.assign(new Error('Rule is already running'), { status: 409 });
+      await this.stop(graphId);
     }
+
 
     const graph = await graphService.getById(graphId);
     if (!graph) {
@@ -42,13 +45,22 @@ export const executionService = {
 
     for (const stage of stages) {
       if (stage.type === 'dataSource') {
-        // Skip — dataSource is the stream source, not a transform.
+        const targetDevice = stage.config?.deviceId?.trim();
+        if (targetDevice) {
+          pipeline = pipeline.pipe(
+            filter((point) => {
+              const devId = point.meta?.deviceId ?? point.deviceId;
+              return devId === targetDevice;
+            })
+          );
+        }
         continue;
       }
       if (typeof stage.operator === 'function') {
         pipeline = pipeline.pipe(stage.operator(stage.config));
       }
     }
+
 
     let inputCount = 0;
     let outputCount = 0;
@@ -68,18 +80,17 @@ export const executionService = {
           at: new Date().toISOString(),
         });
 
-        // If the final stage is an action node, create an alert.
-        const lastStage = stages[stages.length - 1];
-        if (lastStage?.type === 'action') {
-          const actionConfig = lastStage.config ?? {};
-          alertService.create({
-            ruleId: graphId,
-            deviceId: point.meta?.deviceId ?? point.deviceId ?? 'unknown',
-            value: point.fields,
-            status: 'open',
-            meta: { actionType: actionConfig.actionType ?? 'alert', message: actionConfig.message },
-          }).catch((err) => console.error('[exec] alert create failed:', err.message));
-        }
+        // Create an alert record if an action stage is in the pipeline or as default fallback.
+        const actionStage = stages.find((s) => s.type === 'action');
+        const actionConfig = actionStage?.config ?? {};
+        alertService.create({
+          ruleId: graphId,
+          deviceId: point.meta?.deviceId ?? point.deviceId ?? 'unknown',
+          value: point.fields,
+          status: 'open',
+          meta: { actionType: actionConfig.actionType ?? 'alert', message: actionConfig.message ?? 'Alert condition met' },
+        }).catch((err) => console.error('[exec] alert create failed:', err.message));
+
       },
       error: (err) => {
         console.error(`[exec] rule "${graph.name}" (${graphId}) error:`, err.message);
@@ -120,9 +131,15 @@ export const executionService = {
 
   /** Stop a running rule. */
   async stop(graphId) {
-    const active = activeRules.get(graphId);
+    let active = activeRules.get(graphId);
     if (!active) {
-      throw Object.assign(new Error('Rule is not running'), { status: 404 });
+      if (activeRules.size === 1) {
+        const [onlyId] = activeRules.keys();
+        active = activeRules.get(onlyId);
+        graphId = onlyId;
+      } else {
+        return { graphId, stoppedAt: new Date(), durationMs: 0, message: 'Rule was not running' };
+      }
     }
 
     active.subscription.unsubscribe();
@@ -144,6 +161,15 @@ export const executionService = {
     return { graphId, stoppedAt: new Date(), durationMs };
   },
 
+  /** Stop all currently running rules. */
+  async stopAll() {
+    const results = [];
+    for (const [id] of activeRules) {
+      results.push(await this.stop(id));
+    }
+    return results;
+  },
+
   /** List all currently running rules. */
   list() {
     const running = [];
@@ -163,3 +189,4 @@ export const executionService = {
     return activeRules.has(graphId);
   },
 };
+
