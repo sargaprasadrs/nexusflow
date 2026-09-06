@@ -9,19 +9,96 @@ export interface WsMessage<T = unknown> {
   at: string;
 }
 
-export function connectWebSocket(channel: string, onMessage: (msg: WsMessage) => void) {
-  const url = `${DEFAULT_WS_URL}${channel.startsWith('/') ? channel : `/${channel}`}`;
-  const socket = new WebSocket(url);
+export interface ManagedWebSocket {
+  close: () => void;
+  send: (data: string | ArrayBufferLike | Blob | ArrayBufferView) => void;
+  onopen: ((ev: Event) => void) | null;
+  onclose: ((ev: CloseEvent) => void) | null;
+  onerror: ((ev: Event) => void) | null;
+  onmessage: ((ev: MessageEvent) => void) | null;
+  readonly readyState: number;
+}
 
-  socket.onmessage = (event) => {
-    try {
-      onMessage(JSON.parse(event.data as string) as WsMessage);
-    } catch {
-      // ignore non-JSON frames
-    }
+export function connectWebSocket(
+  channel: string,
+  onMessage?: (msg: WsMessage) => void,
+  options: { maxRetries?: number; baseDelayMs?: number; maxDelayMs?: number } = {}
+) {
+  const url = `${DEFAULT_WS_URL}${channel.startsWith('/') ? channel : `/${channel}`}`;
+  const maxRetries = options.maxRetries ?? 10;
+  const baseDelayMs = options.baseDelayMs ?? 1000;
+  const maxDelayMs = options.maxDelayMs ?? 30000;
+
+  let ws: WebSocket | null = null;
+  let retryCount = 0;
+  let isClosedManually = false;
+  let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+
+  const wrapper: ManagedWebSocket = {
+    onopen: null,
+    onclose: null,
+    onerror: null,
+    onmessage: null,
+    get readyState() {
+      return ws ? ws.readyState : 3; // 3 = CLOSED
+    },
+    send(data) {
+      if (ws && ws.readyState === 1) { // 1 = OPEN
+        ws.send(data);
+      }
+    },
+    close() {
+      isClosedManually = true;
+      if (reconnectTimer) clearTimeout(reconnectTimer);
+      if (ws) ws.close();
+    },
   };
 
-  // TODO (Praveen/Sarga, Week 3): automatic reconnect with exponential backoff.
+  function connect() {
+    if (isClosedManually) return;
 
-  return socket;
+    try {
+      ws = new WebSocket(url);
+    } catch {
+      scheduleReconnect();
+      return;
+    }
+
+    ws.onopen = (event) => {
+      retryCount = 0;
+      wrapper.onopen?.(event);
+    };
+
+    ws.onmessage = (event) => {
+      try {
+        const parsed = JSON.parse(event.data as string) as WsMessage;
+        onMessage?.(parsed);
+      } catch {
+        // ignore non-JSON frames
+      }
+      wrapper.onmessage?.(event);
+    };
+
+    ws.onerror = (event) => {
+      wrapper.onerror?.(event);
+    };
+
+    ws.onclose = (event) => {
+      wrapper.onclose?.(event);
+      if (!isClosedManually) {
+        scheduleReconnect();
+      }
+    };
+  }
+
+  function scheduleReconnect() {
+    if (isClosedManually || retryCount >= maxRetries) return;
+    const delay = Math.min(baseDelayMs * Math.pow(2, retryCount), maxDelayMs);
+    retryCount++;
+    reconnectTimer = setTimeout(connect, delay);
+  }
+
+  connect();
+
+  return wrapper as unknown as WebSocket;
 }
