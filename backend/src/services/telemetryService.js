@@ -1,23 +1,24 @@
 import { Telemetry, ensureTelemetryCollection } from '../models/Telemetry.js';
 
 export const telemetryService = {
-  // Batch insert telemetry points into the Time-Series collection.
-  // TODO (Chandra/Sowmya, Week 1): batch with bulkWrite + buffering to reach
-  // the 5,000 writes/sec audit target.
+  // Batch insert telemetry points into the Time-Series collection using bulkWrite for high-throughput performance.
   async insertBatch(points) {
+    if (!points || !points.length) return 0;
     await ensureTelemetryCollection();
-    const docs = points.map((p) => ({
-      ts: new Date(p.ts ?? Date.now()),
-      meta: {
-        deviceId: p.deviceId ?? p.meta?.deviceId ?? 'unknown',
-        deviceType: p.deviceType ?? p.meta?.deviceType ?? 'unknown',
+    const ops = points.map((p) => ({
+      insertOne: {
+        document: {
+          ts: new Date(p.ts ?? Date.now()),
+          meta: {
+            deviceId: p.deviceId ?? p.meta?.deviceId ?? 'unknown',
+            deviceType: p.deviceType ?? p.meta?.deviceType ?? 'unknown',
+          },
+          fields: p.fields && typeof p.fields === 'object' ? p.fields : {},
+        },
       },
-      // Store only the sensor readings; an empty object beats copying ts/meta
-      // into `fields` when the payload omits them.
-      fields: p.fields && typeof p.fields === 'object' ? p.fields : {},
     }));
-    const result = await Telemetry.insertMany(docs, { ordered: false });
-    return result.length;
+    const result = await Telemetry.bulkWrite(ops, { ordered: false });
+    return result.insertedCount ?? points.length;
   },
 
   // Query telemetry for charts: GET /api/telemetry?from=&to=&deviceId=&limit=

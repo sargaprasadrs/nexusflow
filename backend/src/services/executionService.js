@@ -4,6 +4,7 @@ import { buildPipeline } from '../compiler/pipelineBuilder.js';
 import { graphService } from './graphService.js';
 import { alertService } from './alertService.js';
 import { historyService } from './historyService.js';
+import { webhookService } from './webhookService.js';
 import { broker } from '../websocket/broker.js';
 
 // In-memory registry of active rule executions.
@@ -89,6 +90,12 @@ export const executionService = {
           value: point.fields,
           status: 'open',
           meta: { actionType: actionConfig.actionType ?? 'alert', message: actionConfig.message ?? 'Alert condition met' },
+        }).then(() => {
+          if (actionConfig.actionType === 'webhook' && actionConfig.webhookId) {
+            webhookService.fire(actionConfig.webhookId).catch((err) =>
+              console.error('[exec] webhook fire failed:', err.message)
+            );
+          }
         }).catch((err) => console.error('[exec] alert create failed:', err.message));
 
       },

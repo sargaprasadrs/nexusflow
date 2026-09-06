@@ -16,9 +16,22 @@ export const alertService = {
     return Alert.findByIdAndDelete(id);
   },
 
-  // TODO (Week 3): deduplication - avoid creating duplicate alerts for the same
-  // ruleId + deviceId within a window.
-  create(alertData) {
+  // Deduplication: avoid creating duplicate alerts for the same ruleId + deviceId
+  // within a window (default: 10,000ms / 10s).
+  async create(alertData) {
+    const windowMs = alertData.dedupWindowMs ?? 10000;
+    if (windowMs > 0 && alertData.ruleId && alertData.deviceId) {
+      const cutoff = new Date(Date.now() - windowMs);
+      const existing = await Alert.findOne({
+        ruleId: alertData.ruleId,
+        deviceId: alertData.deviceId,
+        status: alertData.status ?? 'open',
+        triggeredAt: { $gte: cutoff },
+      }).lean();
+      if (existing) {
+        return existing;
+      }
+    }
     return Alert.create(alertData);
   },
 };

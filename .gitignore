@@ -32,3 +32,6 @@ Thumbs.db
 # Runtime
 .pids
 *.pid
+
+# Agent instructions
+AGENTS.md
