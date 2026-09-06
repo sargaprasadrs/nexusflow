@@ -4,6 +4,8 @@ import {
   Background,
   Controls,
   MiniMap,
+  ReactFlowProvider,
+  useReactFlow,
   addEdge,
   applyEdgeChanges,
   applyNodeChanges,
@@ -11,10 +13,12 @@ import {
   type EdgeChange,
   type NodeChange,
   type NodeTypes,
+  type Node,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 
 import { useGraphStore } from '../../store/graphStore';
+import type { NodeType } from '../../types/graph';
 import DataSourceNode from '../nodes/DataSourceNode';
 import MathOpNode from '../nodes/MathOpNode';
 import FilterNode from '../nodes/FilterNode';
@@ -32,12 +36,13 @@ const nodeTypes: NodeTypes = {
   action: ActionNode,
 };
 
-export default function GraphCanvas() {
+function GraphCanvasInner() {
   const nodes = useGraphStore((s) => s.nodes);
   const edges = useGraphStore((s) => s.edges);
   const setNodes = useGraphStore((s) => s.setNodes);
   const setEdges = useGraphStore((s) => s.setEdges);
   const setSelectedNodeId = useGraphStore((s) => s.setSelectedNodeId);
+  const { screenToFlowPosition } = useReactFlow();
 
   const onNodesChange = useCallback(
     (changes: NodeChange[]) => setNodes(applyNodeChanges(changes, nodes)),
@@ -54,9 +59,41 @@ export default function GraphCanvas() {
     [edges, setEdges]
   );
 
+  const onDragOver = useCallback((event: React.DragEvent) => {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+  }, []);
+
+  const onDrop = useCallback(
+    (event: React.DragEvent) => {
+      event.preventDefault();
+      const type = event.dataTransfer.getData('application/reactflow') as NodeType;
+      if (!type) return;
+
+      const position = screenToFlowPosition({
+        x: event.clientX,
+        y: event.clientY,
+      });
+
+      const newNode: Node = {
+        id: `${type}-${Date.now()}`,
+        type,
+        position,
+        data: { label: type },
+      };
+
+      setNodes([...nodes, newNode]);
+    },
+    [nodes, setNodes, screenToFlowPosition]
+  );
 
   return (
-    <div className="graph-canvas" style={{ flex: 1, position: 'relative' }}>
+    <div
+      className="graph-canvas"
+      style={{ flex: 1, position: 'relative' }}
+      onDragOver={onDragOver}
+      onDrop={onDrop}
+    >
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -75,5 +112,13 @@ export default function GraphCanvas() {
         <MiniMap />
       </ReactFlow>
     </div>
+  );
+}
+
+export default function GraphCanvas() {
+  return (
+    <ReactFlowProvider>
+      <GraphCanvasInner />
+    </ReactFlowProvider>
   );
 }

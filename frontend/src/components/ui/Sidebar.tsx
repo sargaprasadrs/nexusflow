@@ -2,7 +2,7 @@ import type { Node } from '@xyflow/react';
 import { useGraphStore } from '../../store/graphStore';
 import type { NodeType } from '../../types/graph';
 
-// Node palette (Week 1-2) - click (or drag, TODO) a node type to add it to the canvas.
+// Node palette - click or drag a node type to add it to the canvas.
 const PALETTE: Array<{ type: NodeType; label: string }> = [
   { type: 'dataSource', label: 'Data Source' },
   { type: 'mathOp', label: 'Math Operation' },
@@ -26,6 +26,11 @@ export default function Sidebar() {
     setNodes([...nodes, newNode]);
   };
 
+  const onDragStart = (event: React.DragEvent, type: NodeType) => {
+    event.dataTransfer.setData('application/reactflow', type);
+    event.dataTransfer.effectAllowed = 'move';
+  };
+
   return (
     <aside className="panel panel--palette" style={{ width: 200 }}>
       <h3>Node Library</h3>
@@ -33,6 +38,8 @@ export default function Sidebar() {
         <button
           key={item.type}
           className="palette-item"
+          draggable
+          onDragStart={(e) => onDragStart(e, item.type)}
           onClick={() => addNode(item.type)}
         >
           {item.label}
