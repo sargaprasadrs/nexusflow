@@ -1,125 +1,204 @@
-# NexusFlow
+# yallist
 
-NexusFlow is a visual rule engine for building, compiling, and running telemetry-driven workflows. The system combines a React Flow canvas, a Node.js and Express backend, MongoDB Time-Series storage, RxJS-based stream processing, and WebSocket-powered live updates.
+Yet Another Linked List
 
-This README captures the project direction, team workflow, and the August 5-31, 2026 delivery plan.
+There are many doubly-linked list implementations like it, but this
+one is mine.
 
-## Project Goals
+For when an array would be too big, and a Map can't be iterated in
+reverse order.
 
-- Build a visual rule authoring experience with reusable node types.
-- Support high-throughput telemetry ingestion and real-time processing.
-- Compile graph logic into executable backend behavior.
-- Provide live dashboards, alerts, history, audit logs, and export tools.
-- Ship with documentation, testing, performance benchmarks, and deployment guidance.
 
-## Core Stack
+[![Build Status](https://travis-ci.org/isaacs/yallist.svg?branch=master)](https://travis-ci.org/isaacs/yallist) [![Coverage Status](https://coveralls.io/repos/isaacs/yallist/badge.svg?service=github)](https://coveralls.io/github/isaacs/yallist)
 
-- Frontend: React, React Flow, dashboard and canvas UI components
-- Backend: Node.js, Express, RxJS, WebSocket services
-- Database: MongoDB Time-Series collections
-- Integrations: telemetry ingestion, webhook execution, alert delivery
-- Quality: validation, testing, performance tuning, security review
+## basic usage
 
-## Team Roles
+```javascript
+var yallist = require('yallist')
+var myList = yallist.create([1, 2, 3])
+myList.push('foo')
+myList.unshift('bar')
+// of course pop() and shift() are there, too
+console.log(myList.toArray()) // ['bar', 1, 2, 3, 'foo']
+myList.forEach(function (k) {
+  // walk the list head to tail
+})
+myList.forEachReverse(function (k, index, list) {
+  // walk the list tail to head
+})
+var myDoubledList = myList.map(function (k) {
+  return k + k
+})
+// now myDoubledList contains ['barbar', 2, 4, 6, 'foofoo']
+// mapReverse is also a thing
+var myDoubledListReverse = myList.mapReverse(function (k) {
+  return k + k
+}) // ['foofoo', 6, 4, 2, 'barbar']
 
-- Sarga: coordination, GitHub management, DevOps, documentation, UI polish
-- Chandra: backend streams, compiler, rule execution, performance work
-- Praveen: React canvas, node components, dashboards, animations, component docs
-- Sowmya: MongoDB, persistence, webhooks, audit logging, security
+var reduced = myList.reduce(function (set, entry) {
+  set += entry
+  return set
+}, 'start')
+console.log(reduced) // 'startfoo123bar'
+```
 
-## Branch Strategy
+## api
 
-- main: integration branch
-- backend-chandra: backend work owned by Chandra
-- frontend-praveen: frontend work owned by Praveen
-- backend-sowmya: backend and integration work owned by Sowmya
+The whole API is considered "public".
 
-Daily work is developed on feature branches, then merged into main on weekly reviews.
+Functions with the same name as an Array method work more or less the
+same way.
 
-## Delivery Roadmap
+There's reverse versions of most things because that's the point.
 
-### Week 1: August 5-11, 2026
+### Yallist
 
-Focus: project kickoff, database foundation, API scaffolding, and canvas setup.
+Default export, the class that holds and manages a list.
 
-- MongoDB Time-Series schema design and seed data
-- Express server setup and ingest endpoint skeleton
-- React app scaffold and React Flow integration
-- Canvas scaffolding, node creation, edge logic, and save/load flow
-- Weekly review, documentation updates, and main branch merge
+Call it with either a forEach-able (like an array) or a set of
+arguments, to initialize the list.
 
-### Week 2: August 12-18, 2026
+The Array-ish methods all act like you'd expect.  No magic length,
+though, so if you change that it won't automatically prune or add
+empty spots.
 
-Focus: compiler foundation, operator library, and live execution support.
+### Yallist.create(..)
 
-- RxJS setup and graph compiler parser
-- Operator builder, filter logic, logical operators, and aggregations
-- Live compilation, execution status UI, and error handling
-- Performance audit, demo preparation, and mid-review merge
+Alias for Yallist function.  Some people like factories.
 
-### Week 3: August 19-25, 2026
+#### yallist.head
 
-Focus: live dashboards, webhooks, alert management, and resilience.
+The first node in the list
 
-- WebSocket broadcasting and live telemetry charts
-- Subscription management and alert panel UI
-- Webhook executor and configuration UI
-- Concurrent execution, alert deduplication, execution logging
-- Performance optimization, edge case testing, and merge to main
+#### yallist.tail
 
-### Week 4: August 26-31, 2026
+The last node in the list
 
-Focus: refinement, history, templates, audits, documentation, and final review.
+#### yallist.length
 
-- Rule history service, viewer, and API endpoints
-- Template library and audit logging
-- CSV export, dark mode, and responsive/security testing
-- Setup guide, component API docs, backend docs, and deployment notes
-- Final bug fixes, benchmarks, full merge, and verification
+The number of nodes in the list.  (Change this at your peril.  It is
+not magic like Array length.)
 
-## Daily Standup Format
+#### yallist.toArray()
 
-Time: 5 PM IST
+Convert the list to an array.
 
-- Chandra: completed work, next task, blockers
-- Praveen: completed work, next task, blockers
-- Sowmya: completed work, next task, blockers
-- Sarga: summary and action items
+#### yallist.forEach(fn, [thisp])
 
-Standup outcome: capture blockers, confirm dependencies, and align the next day’s work.
+Call a function on each item in the list.
 
-## Key Deliverables
+#### yallist.forEachReverse(fn, [thisp])
 
-1. Fully functional NexusFlow visual rule engine
-2. MongoDB Time-Series schema with optimized ingestion
-3. Express and Node.js backend with RxJS compilation pipeline
-4. React Flow canvas with node library and graph editing
-5. Real-time WebSocket telemetry streaming
-6. Rule templates, audit logs, and history tracking
-7. Complete API and component documentation
-8. Setup, deployment, and local development guides
-9. Performance benchmarks, load tests, and security review
-10. Final demo-ready main branch
+Call a function on each item in the list, in reverse order.
 
-## Commit Standards
+#### yallist.get(n)
 
-- Use meaningful conventional commit messages.
-- Keep commits small and focused.
-- Ensure every feature, fix, test, or doc update is traceable.
-- Avoid long gaps in activity during the project window.
+Get the data at position `n` in the list.  If you use this a lot,
+probably better off just using an Array.
 
-## Suggested README Additions During Execution
+#### yallist.getReverse(n)
 
-As the project evolves, this README can also include:
+Get the data at position `n`, counting from the tail.
 
-- architecture diagrams
-- screenshots or canvas previews
-- API endpoint references
-- setup instructions
-- development scripts
-- deployment steps
-- testing notes
+#### yallist.map(fn, thisp)
 
-## Project Summary
+Create a new Yallist with the result of calling the function on each
+item.
 
-NexusFlow is planned as a complete end-to-end platform for designing, compiling, and executing telemetry-driven rules with live visual feedback. The roadmap above is organized to move from infrastructure and ingestion, to compilation and execution, and finally to hardening, documentation, and release preparation.
+#### yallist.mapReverse(fn, thisp)
+
+Same as `map`, but in reverse.
+
+#### yallist.pop()
+
+Get the data from the list tail, and remove the tail from the list.
+
+#### yallist.push(item, ...)
+
+Insert one or more items to the tail of the list.
+
+#### yallist.reduce(fn, initialValue)
+
+Like Array.reduce.
+
+#### yallist.reduceReverse
+
+Like Array.reduce, but in reverse.
+
+#### yallist.reverse
+
+Reverse the list in place.
+
+#### yallist.shift()
+
+Get the data from the list head, and remove the head from the list.
+
+#### yallist.slice([from], [to])
+
+Just like Array.slice, but returns a new Yallist.
+
+#### yallist.sliceReverse([from], [to])
+
+Just like yallist.slice, but the result is returned in reverse.
+
+#### yallist.toArray()
+
+Create an array representation of the list.
+
+#### yallist.toArrayReverse()
+
+Create a reversed array representation of the list.
+
+#### yallist.unshift(item, ...)
+
+Insert one or more items to the head of the list.
+
+#### yallist.unshiftNode(node)
+
+Move a Node object to the front of the list.  (That is, pull it out of
+wherever it lives, and make it the new head.)
+
+If the node belongs to a different list, then that list will remove it
+first.
+
+#### yallist.pushNode(node)
+
+Move a Node object to the end of the list.  (That is, pull it out of
+wherever it lives, and make it the new tail.)
+
+If the node belongs to a list already, then that list will remove it
+first.
+
+#### yallist.removeNode(node)
+
+Remove a node from the list, preserving referential integrity of head
+and tail and other nodes.
+
+Will throw an error if you try to have a list remove a node that
+doesn't belong to it.
+
+### Yallist.Node
+
+The class that holds the data and is actually the list.
+
+Call with `var n = new Node(value, previousNode, nextNode)`
+
+Note that if you do direct operations on Nodes themselves, it's very
+easy to get into weird states where the list is broken.  Be careful :)
+
+#### node.next
+
+The next node in the list.
+
+#### node.prev
+
+The previous node in the list.
+
+#### node.value
+
+The data the node contains.
+
+#### node.list
+
+The list to which this node belongs.  (Null if it does not belong to
+any list.)
